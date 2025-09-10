@@ -5,6 +5,13 @@ import prisma from '@/lib/prisma'
 
 export async function GET() {
   try {
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is missing in environment')
+      return new Response(
+        JSON.stringify({ ok: false, error: 'DB_URL_MISSING' }),
+        { headers: { 'Content-Type': 'application/json' }, status: 500 }
+      )
+    }
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
       include: { rating: true },
@@ -14,6 +21,7 @@ export async function GET() {
       status: 200,
     })
   } catch (err) {
+    console.error('GET /api/products failed:', err)
     return new Response(
       JSON.stringify({ ok: false, error: 'FAILED_TO_FETCH_PRODUCTS' }),
       { headers: { 'Content-Type': 'application/json' }, status: 500 }
@@ -50,6 +58,7 @@ export async function POST(request) {
       status: 201,
     })
   } catch (err) {
+    console.error('POST /api/products failed:', err)
     return new Response(
       JSON.stringify({ ok: false, error: 'FAILED_TO_CREATE_PRODUCT' }),
       { headers: { 'Content-Type': 'application/json' }, status: 500 }

@@ -7,6 +7,7 @@ export async function GET() {
   try {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
+      include: { rating: true },
     })
     return new Response(JSON.stringify({ ok: true, data: products }), {
       headers: { 'Content-Type': 'application/json' },
@@ -55,4 +56,3 @@ export async function POST(request) {
     )
   }
 }
-

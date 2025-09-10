@@ -2,14 +2,24 @@
 import PageTitle from "@/components/PageTitle"
 import { useEffect, useState } from "react";
 import OrderItem from "@/components/OrderItem";
-import { orderDummyData } from "@/assets/assets";
+const DEMO_USER_ID = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'user_demo_1'
 
 export default function Orders() {
 
     const [orders, setOrders] = useState([]);
 
     useEffect(() => {
-        setOrders(orderDummyData)
+        const load = async () => {
+            try {
+                const res = await fetch(`/api/orders?userId=${DEMO_USER_ID}`, { cache: 'no-store' })
+                if (!res.ok) throw new Error('Failed to load orders')
+                const j = await res.json()
+                setOrders(Array.isArray(j?.data) ? j.data : [])
+            } catch (e) {
+                setOrders([])
+            }
+        }
+        load()
     }, []);
 
     return (

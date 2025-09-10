@@ -1,7 +1,8 @@
 import { PlusIcon, SquarePenIcon, XIcon } from 'lucide-react';
 import React, { useState } from 'react'
 import AddressModal from './AddressModal';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { clearCart } from '@/lib/features/cart/cartSlice';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 
@@ -10,6 +11,7 @@ const OrderSummary = ({ totalPrice, items }) => {
     const currency = process.env.NEXT_PUBLIC_CURRENCY_SYMBOL || '$';
 
     const router = useRouter();
+    const dispatch = useDispatch();
 
     const addressList = useSelector(state => state.address.list);
 
@@ -26,7 +28,35 @@ const OrderSummary = ({ totalPrice, items }) => {
 
     const handlePlaceOrder = async (e) => {
         e.preventDefault();
+        if (!selectedAddress) {
+            throw new Error('Please select or add an address')
+        }
+        if (!items || items.length === 0) {
+            throw new Error('Your cart is empty')
+        }
 
+        const userId = process.env.NEXT_PUBLIC_DEMO_USER_ID || 'user_demo_1'
+        const payload = {
+            userId,
+            items: items.map(i => ({ productId: i.id, quantity: i.quantity })),
+            address: selectedAddress,
+            paymentMethod,
+            isPaid: false,
+            isCouponUsed: !!coupon,
+            coupon: coupon || {},
+        }
+
+        const res = await fetch('/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        if (!res.ok) {
+            const j = await res.json().catch(() => ({}))
+            throw new Error(j?.error || 'Failed to place order')
+        }
+
+        dispatch(clearCart())
         router.push('/orders')
     }
 
